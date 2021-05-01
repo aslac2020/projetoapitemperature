@@ -28,6 +28,12 @@ namespace CityTemperature.Repositories
             if (getCity == null)
             {
                 var searchCityApi = await GetCitySearchByApi(city);
+
+                if (searchCityApi == null)
+                {
+                    return null;
+                }
+
                 _temperaturecontext.TemperatureCitys.Add(searchCityApi);
                 _temperaturecontext.SaveChanges();
 
@@ -73,9 +79,6 @@ namespace CityTemperature.Repositories
             {
                 try
                 {
-                    string appId = "9a8f62a62ea4ccad5ee2185f8454c59d";
-
-                    string url = string.Format("http://api.openweathermap.org/data/2.5/weather?q={0}&units=metric&cnt=1&APPID={1}", city, appId);
 
                     client.BaseAddress = new Uri("http://api.openweathermap.org");
                     var result = await client.GetAsync($"/data/2.5/weather?q={city}&appid=9a8f62a62ea4ccad5ee2185f8454c59d&units=metric");
@@ -93,11 +96,13 @@ namespace CityTemperature.Repositories
                     return response;
 
                 }
-                catch (Exception)
+                catch (Exception )
                 {
-                    return response;
+                    Console.WriteLine("Ops! Cidade Inexistente :(");
+                    return null;
                 }
 
+                return response;
             }
         }
 

@@ -23,6 +23,12 @@ namespace CityTemperature.Controllers
         public async Task<IActionResult> GetTemperatureCity(string city)
         {
             var response = await _repositories.Add(city);
+
+            if (response == null)
+            {
+               return BadRequest("Ops! Cidade não encontrada :(");
+            }
+
             return Ok(response);
 
         }
