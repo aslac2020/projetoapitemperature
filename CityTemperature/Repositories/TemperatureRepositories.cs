@@ -1,4 +1,5 @@
-﻿using CityTemperature.Context;
+﻿using CityTemperature.Borders.Interfaces;
+using CityTemperature.Context;
 using CityTemperature.Models;
 using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
@@ -19,115 +20,33 @@ namespace CityTemperature.Repositories
             _temperaturecontext = context;
         }
 
-        public async Task<TemperatureModel> Add(string city)
+        public async Task<TemperatureModel> Add(TemperatureModel city)
+        {
+            _temperaturecontext.TemperatureCitys.Add(city);
+            _temperaturecontext.SaveChanges();
+            return city;
+        }
+
+
+        public TemperatureModel GetCity(string city)
         {
             var response = new TemperatureModel();
 
-            var getCity = _temperaturecontext.TemperatureCitys.Where(x => x.City == city).FirstOrDefault();
-
-            if (getCity == null)
-            {
-                var searchCityApi = await GetCitySearchByApi(city);
-
-                if (searchCityApi == null)
-                {
-                    return null;
-                }
-
-                _temperaturecontext.TemperatureCitys.Add(searchCityApi);
-                _temperaturecontext.SaveChanges();
-
-                return searchCityApi;
-            }
-
-            if (getCity.City.ToUpper() == city.ToUpper())
-            {
-                var dateNow = DateTime.Now;
-                var dateMysql = getCity.DateAtualize;
-                var compare = dateNow - dateMysql;
-                var compareMinutes = (int)compare.TotalMinutes;
-
-                if (compareMinutes >= 20)
-                {
-                    var cityResult = await GetCitySearchByApi(city);
-                    var result = await UpdateCity(getCity.Id, cityResult);
-
-                    return result;
-                }
-
-            }
-
-            return getCity;
-
+            return _temperaturecontext.TemperatureCitys.Where(x => x.City == city).FirstOrDefault();
         }
 
-        public TemperatureModel GetCity(string request)
+        public void Update(TemperatureModel request, int id)
         {
-            throw new NotImplementedException();
-        }
 
-        public string Update(TemperatureModel request)
-        {
-            throw new NotImplementedException();
-        }
-
-        public static async Task<TemperatureModel> GetCitySearchByApi(string city)
-        {
-            var response = new TemperatureModel();
-
-            using (var client = new HttpClient())
-            {
-                try
-                {
-
-                    client.BaseAddress = new Uri("http://api.openweathermap.org");
-                    var result = await client.GetAsync($"/data/2.5/weather?q={city}&appid=9a8f62a62ea4ccad5ee2185f8454c59d&units=metric");
-                    result.EnsureSuccessStatusCode();
-
-                    var request = await result.Content.ReadAsStringAsync();
-                    var resultRequest = JsonConvert.DeserializeObject<Rootobject>(request);
-
-                    response.DateAtualize = DateTime.Now;
-                    response.City = resultRequest.name;
-                    response.Temp = resultRequest.main.temp;
-                    response.Temp_Max = resultRequest.main.temp_max;
-                    response.Temp_Min = resultRequest.main.temp_min;
-
-                    return response;
-
-                }
-                catch (Exception )
-                {
-                    Console.WriteLine("Ops! Cidade Inexistente :(");
-                    return null;
-                }
-
-                return response;
-            }
-        }
-
-        public async Task<TemperatureModel> UpdateCity(int id, TemperatureModel model)
-        {
-            var reponse = new TemperatureModel();
-            model.Id = id;
-
+            request.Id = id;
             var citySearch = _temperaturecontext.Set<TemperatureModel>().Local.Where(x => x.Id == id).FirstOrDefault();
 
             if (citySearch != null)
-            {
                 _temperaturecontext.Entry(citySearch).State = EntityState.Detached;
-            }
 
-            reponse.Id = model.Id;
-            reponse.DateAtualize = DateTime.Now;
-            reponse.City = model.City;
-            reponse.Temp = model.Temp;
-            reponse.Temp_Max = model.Temp_Max;
-            reponse.Temp_Min = model.Temp_Min;
-            _temperaturecontext.TemperatureCitys.Update(reponse);
+            _temperaturecontext.TemperatureCitys.Update(request);
             _temperaturecontext.SaveChanges();
 
-            return reponse;
         }
 
         public void Remove(int id)
@@ -136,5 +55,6 @@ namespace CityTemperature.Repositories
             _temperaturecontext.TemperatureCitys.Remove(removeCity);
             _temperaturecontext.SaveChanges();
         }
+
     }
 }

@@ -1,5 +1,10 @@
-﻿using CityTemperature.Context;
+﻿using CityTemperature.Adapter;
+using CityTemperature.Borders.Adapter;
+using CityTemperature.Borders.Interfaces;
+using CityTemperature.Borders.UseCase;
+using CityTemperature.Context;
 using CityTemperature.Repositories;
+using CityTemperature.UseCase;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
@@ -26,7 +31,16 @@ namespace CityTemperature
 
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
 
+            services.AddScoped<IAddCitysUseCase, AddCitysUseCase>();
+            services.AddScoped<IGetCitysUseCase, GetCitysUseCase>();
+
             services.AddScoped<ITemperatureRepositories, TemperatureRepositories>();
+
+
+            services.AddScoped<IAddCitysAdapter, AddCitysAdapter>();
+            services.AddScoped<IGetCitysAdapter, GetCitysAdapter>();
+            services.AddScoped<ISearchCityApiAdapter, SearchCityApiAdapter>();
+
 
             services.AddSwaggerGen(c =>
             {
